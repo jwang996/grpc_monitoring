@@ -127,7 +127,7 @@ This project is meant to help not just me, but also you—so you can follow alon
 * [Prometheus](https://prometheus.io/docs/)
 * [Grafana](https://grafana.com/docs/)
 * [Loki](https://grafana.com/oss/loki/)
-* [OpenTelemetry](https://opentelemetry.io/docs/): 
+* [OpenTelemetry](https://opentelemetry.io/docs/)
 * [cAdvisor](https://github.com/google/cadvisor)
 
 Feel free to explore these official resources to deepen your understanding of modern monitoring and observability tools.
