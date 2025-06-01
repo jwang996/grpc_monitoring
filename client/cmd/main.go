@@ -4,6 +4,7 @@ import (
 	"client/internal/security"
 	"context"
 	"errors"
+	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"log"
 	"net/http"
 	"os"
@@ -21,9 +22,16 @@ import (
 
 func main() {
 	cfg := config.LoadConfig()
+	ctx := context.Background()
 
 	tickerCtx, cancelTickers := context.WithCancel(context.Background())
 	defer cancelTickers()
+
+	tp, err := setupOpenTelemetry(ctx, cfg)
+	if err != nil {
+		log.Fatalf("failed to set up tracer: %v", err)
+	}
+	defer func() { _ = tp.Shutdown(ctx) }()
 
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
@@ -33,8 +41,16 @@ func main() {
 		log.Fatalf("cannot load client TLS credentials: %v", err)
 	}
 
+	// Dial options:
+	// - WithStatsHandler(otelgrpc.NewClientHandler()) → for tracing outgoing RPCs
+	// - grpcprometheus interceptors → for Prometheus metrics
+	otelClientHandler := otelgrpc.NewClientHandler()
 	dialOpts := []grpc.DialOption{
+		// mTLS
 		grpc.WithTransportCredentials(creds),
+		// OpenTelemetry interceptor
+		grpc.WithStatsHandler(otelClientHandler),
+		// Prometheus interceptors
 		grpc.WithUnaryInterceptor(grpcprometheus.UnaryClientInterceptor),
 		grpc.WithStreamInterceptor(grpcprometheus.StreamClientInterceptor),
 	}

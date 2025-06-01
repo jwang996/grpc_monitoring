@@ -11,11 +11,12 @@ services:
       - "50059:50059"
       - "2001:2001"
     environment:
-      - GRPC_PORT=50059
-      - METRICS_PORT=2001
-      - TLS_CERT_FILE=/etc/certs/server.crt.pem
-      - TLS_KEY_FILE=/etc/certs/server.key.pem
-      - TLS_CA_FILE=/etc/certs/ca.crt.pem
+      GRPC_PORT: "50059"
+      METRICS_PORT: "2001"
+      TLS_CERT_FILE: "/etc/certs/server.crt.pem"
+      TLS_KEY_FILE: "/etc/certs/server.key.pem"
+      TLS_CA_FILE: "/etc/certs/ca.crt.pem"
+      OTLP_COLLECTOR_ENDPOINT: "jaeger:4317"
     volumes:
       - ./certs:/etc/certs:ro
 
@@ -35,6 +36,7 @@ services:
       TLS_CERT_FILE: "/etc/certs/client.crt.pem"
       TLS_KEY_FILE: "/etc/certs/client.key.pem"
       TLS_CA_FILE: "/etc/certs/ca.crt.pem"
+      OTLP_COLLECTOR_ENDPOINT: "jaeger:4317"
     volumes:
       - ./certs:/etc/certs:ro
 
@@ -66,6 +68,7 @@ services:
       - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
     depends_on:
       - prometheus
+      - jaeger
 
   cadvisor:
     image: gcr.io/cadvisor/cadvisor:v0.52.1
@@ -79,5 +82,13 @@ services:
       - /var/lib/docker/:/var/lib/docker:ro  # Docker metadata
       - /var/run/docker.sock:/var/run/docker.sock:ro  # <-- allows Docker labels
 
+  jaeger:
+    image: jaegertracing/all-in-one:1.49
+    container_name: jaeger
+    ports:
+      - "16686:16686"   # Jaeger HTTP UI
+      - "4317:4317"   # OTLP/gRPC receiver
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
 volumes:
   grafana_data:

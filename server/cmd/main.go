@@ -13,6 +13,8 @@ import (
 	"syscall"
 	"time"
 
+	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
+
 	grpcprometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"google.golang.org/grpc"
@@ -24,9 +26,16 @@ import (
 
 func main() {
 	cfg := config.LoadConfig()
+	ctx := context.Background()
 
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
+
+	tp, err := setupOpenTelemetry(ctx, cfg)
+	if err != nil {
+		log.Fatalf("failed to set up tracer: %v", err)
+	}
+	defer func() { _ = tp.Shutdown(ctx) }()
 
 	creds, err := security.LoadTLSCredentials(cfg)
 	if err != nil {
@@ -46,8 +55,16 @@ func main() {
 		}
 	}()
 
+	// Dial options:
+	// - WithStatsHandler(otelgrpc.NewClientHandler()) → for tracing outgoing RPCs
+	// - grpcprometheus interceptors → for Prometheus metrics
+	otelServerHandler := otelgrpc.NewServerHandler()
 	grpcServer := grpc.NewServer(
+		// mTLS
 		grpc.Creds(creds),
+		// OpenTelemetry interceptor
+		grpc.StatsHandler(otelServerHandler),
+		// Prometheus interceptors
 		grpc.StreamInterceptor(grpcprometheus.StreamServerInterceptor),
 		grpc.UnaryInterceptor(grpcprometheus.UnaryServerInterceptor),
 	)

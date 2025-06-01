@@ -1,18 +1,19 @@
 # gRPC Monitoring Demo with Prometheus & Grafana
 
-This repository demonstrates how to instrument a Go-gRPC server and client with Prometheus metrics, collect container‑level stats via cAdvisor, and visualize everything in Grafana.
+This project demonstrates how to instrument a Go gRPC service with Prometheus for metrics, cAdvisor for container-level stats, and Jaeger for distributed tracing—unified in Grafana.
 
 ### Why This Project?
 
-* During my recent DevOps work with Prometheus, Loki, Grafana, OpenTelemetry and related tools, I recognized their power and wanted to build a similar monitoring pipeline myself.
+* During my recent DevOps work with Prometheus, Loki, Grafana, OpenTelemetry and related tools, I fell in love with real-time observability. I wanted to build something hands-on, so ...
 * This demo shows an end‑to‑end setup: from instrumenting code to visualizing metrics in Grafana.
 * As a Go & gRPC enthusiast, I wanted a clean, reproducible example that anyone can clone and run.
 
 ## Project Overview
 
-* **gRPC server**: A Go server exposing a `Monitoring` RPC. Instrumented with Prometheus middleware for request counts, error rates, and latencies.
-* **gRPC client**: A Go client that periodically sends correct (`ping`) and incorrect (`wrong`) requests to the server. Exposes its own Prometheus metrics (total, success, and failure counts).
+* **gRPC server**: A Go server exposing a `Monitoring` RPC. Instrumented with Prometheus middleware for request counts, error rates, and latencies, with OpenTelemetry traces to Jaeger.
+* **gRPC client**: A Go client that periodically sends correct (`ping`) and incorrect (`wrong`) requests to the server. Exposes its own Prometheus metrics (total, success, and failure counts), with OpenTelemetry traces to Jaeger.
 * **cAdvisor**: Collects CPU, memory, disk, and network metrics for all containers.
+* **Jaeger All-in-One** → collects OTLP spans. Accessible at `http://localhost:16686` and dashboard in grafana.
 * **Prometheus**: Scrapes metrics from the gRPC server (`:2001/metrics`), gRPC client (`:2016/metrics`), cAdvisor (`:8080/metrics`), and itself. Runs at `:9099`.
 * **Grafana**: Auto‑imports a dashboard that shows both application and container metrics. Accessible at `http://localhost:3005`.
 
@@ -22,14 +23,18 @@ This repository demonstrates how to instrument a Go-gRPC server and client with 
 .
 ├── certs/                         # mTLS files and instructions (README inside)
 ├── client/
-│   ├── cmd/main/                  # gRPC client entrypoint with Prometheus metrics
+│   ├── cmd/ 
+│   │   ├──main.go
+│   │   └──open_telemetry.go
 │   └── internal/
 │       ├── config/                # Client config loader
 │       ├── pb/                    # Generated protobuf for monitoring.proto
 │       ├── security/              # Client TLS credentials loader
 │       └── service/               # Client code (sends ping/wrong periodically)
 ├── server/
-│   ├── cmd/main/                  # gRPC server entrypoint with Prometheus metrics
+│   ├── cmd/ 
+│   │   ├──main.go
+│   │   └──open_telemetry.go
 │   └── internal/
 │       ├── config/                # Server config loader
 │       ├── pb/                    # Generated protobuf for monitoring.proto
@@ -41,6 +46,9 @@ This repository demonstrates how to instrument a Go-gRPC server and client with 
 │   │       ├── dashboards/
 │   │       │   ├── dashboards.yaml
 │   │       │   └── grpc_monitoring_dashboard.json
+│   │       └── datasources/
+│   │           ├── prometheus-datasource.yml
+│   │           └── jaeger-datasource.yml
 │   └── prometheus/
 │       └── prometheus.yml         # Prometheus scrape configuration
 ├── image/
@@ -92,6 +100,7 @@ client_ext.cnf
     * `grpc_client` (sends ping/wrong, exposes `:2016/metrics`)
     * `cadvisor` (exposes `:8080/metrics` for container stats)
     * `prometheus` (on `:9099`; scrapes server, client, cAdvisor, and itself)
+    * `jaeger` (on `:16686`; receives spans from both server & client (via OTLP))
     * `grafana` (on `:3005`; auto‑imports the dashboard)
 
 2. **Verify Prometheus targets**
@@ -103,7 +112,18 @@ client_ext.cnf
     * `cadvisor:8080`
     * `prometheus:9090`
 
-3. **View Grafana dashboard**
+3. **Verify Jaeger all in one**
+
+   Open Jaeger’s UI at `http://localhost:16686`
+   In the “Search” form at the top:
+      * Select Service = grpc-server (or grpc-client if you prefer).
+      * Leave “Operation” blank (it will show all gRPC operations).
+      * Click Find Traces.
+   Click any trace ID in the list to view the span timeline.
+      * You’ll see spans for `Monitoring.MonitoringService/Monitoring` (on the server side) and corresponding client spans from grpc-client. 
+   As soon as traces start flowing, you’ll be able to drill into each span’s details—timestamps, tags, and any custom metadata you’ve injected.
+   
+4. **View Grafana dashboard**
 
    Open `http://localhost:3005`. Log in with the default `admin` / `admin` credentials. 
    Navigate to **Dashboards → Manage** and select **“gRPC & Container Monitoring”**. You will see panels for:
@@ -111,6 +131,7 @@ client_ext.cnf
     * gRPC server request & error rates, P95/median latency.
     * gRPC client total/success/failed request rates.
     * Container CPU %, memory usage, and filesystem usage for `grpc_server` and `grpc_client`.
+    * Spans from Jaeger for `grpc_server` and `grpc_client`.
 
    ![Grafana Dashboard](image/grafana.png)
 
@@ -118,7 +139,7 @@ client_ext.cnf
 
 ## Final words
 
-Modern observability stacks are incredibly powerful and ever-evolving. I’m excited to continue learning about Prometheus, Grafana, Loki, OpenTelemetry and other tools to build even more robust systems.
+Modern observability stacks are incredibly powerful and ever-evolving. I’m excited to continue learning about Prometheus, Grafana, Jaeger, OpenTelemetry and other tools to build even more robust systems.
 
 This project is meant to help not just me, but also you—so you can follow along, experiment, and build your own monitoring pipelines!
 
@@ -126,7 +147,7 @@ This project is meant to help not just me, but also you—so you can follow alon
 
 * [Prometheus](https://prometheus.io/docs/)
 * [Grafana](https://grafana.com/docs/)
-* [Loki](https://grafana.com/oss/loki/)
+* [Jaeger](https://www.jaegertracing.io/docs/1.18/)
 * [OpenTelemetry](https://opentelemetry.io/docs/)
 * [cAdvisor](https://github.com/google/cadvisor)
 

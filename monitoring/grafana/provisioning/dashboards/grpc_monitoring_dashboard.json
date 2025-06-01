@@ -221,6 +221,42 @@
       ],
       "title": "Container Filesystem Usage",
       "type": "timeseries"
+    },{
+      "id": 7,
+      "type": "timeseries",
+      "title": "Jaeger Traces: grpc-client → Monitoring",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 24 },
+      "datasource": "Jaeger",
+      "targets": [
+        {
+          "refId": "A",
+          "queryType": "search",
+          "service": "grpc-client",
+          "operation": "Monitoring.MonitoringService/Monitoring"
+        }
+      ],
+      "options": {
+        "legend": { "showLegend": true, "displayMode": "list", "placement": "bottom", "calcs": [] },
+        "tooltip": { "mode": "single", "sort": "none", "hideZeros": false }
+      }
+    },{
+      "id": 8,
+      "type": "timeseries",
+      "title": "Jaeger Traces: grpc-server → Monitoring",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 24 },
+      "datasource": "Jaeger",
+      "targets": [
+        {
+          "refId": "A",
+          "queryType": "search",
+          "service": "grpc-server",
+          "operation": "Monitoring.MonitoringService/Monitoring"
+        }
+      ],
+      "options": {
+        "legend": { "showLegend": true, "displayMode": "list", "placement": "bottom", "calcs": [] },
+        "tooltip": { "mode": "single", "sort": "none", "hideZeros": false }
+      }
     }
   ],
   "refresh": "30s",
