@@ -52,7 +52,7 @@ This repository demonstrates how to instrument a Go-gRPC server and client with 
 ## Prerequisites
 
 * **Docker & Docker Compose** installed on your machine.
-* **Go 1.18+** (if you want to rebuild the client/server locally).
+* **Go 1.24+** (if you want to rebuild the client/server locally).
 
 ## Generate mTLS Certificates
 
