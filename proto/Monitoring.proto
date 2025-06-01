@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+package Monitoring;
+
+option go_package = "server/internal/pb/monitoring;monitoringpb";
+
+import "google/protobuf/timestamp.proto";
+
+service MonitoringService {
+  rpc Monitoring     (MonitoringClientRequest)    returns (MonitoringServerResponse);
+}
+
+message Client {
+  string message = 1;
+  google.protobuf.Timestamp request_date = 2;
+}
+
+message MonitoringClientRequest {
+    Client client_request = 1;
+}
+
+message MonitoringServerResponse {
+  string message = 1;
+}

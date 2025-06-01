@@ -1,0 +1,7 @@
+# 1) ignore everything in this directory
+*
+
+# 2) but do not ignore README.md
+!README.md
+!client_ext.cnf
+!server_ext.cnf

@@ -1,0 +1,25 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: "grpc_server"
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["server:2001"]
+
+  - job_name: "grpc_client"
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["client:2016"]
+
+  # Scrape cAdvisor for container‐level metrics:
+  - job_name: "cadvisor"
+    metrics_path: /metrics
+    static_configs:
+      - targets: [ "cadvisor:8080" ]
+
+  # Scrape Prometheus’s own metrics:
+  - job_name: "prometheus"
+    static_configs:
+      - targets: [ "localhost:9090" ]

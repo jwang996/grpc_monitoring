@@ -1,0 +1,237 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": "-- Grafana --",
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "finished": true,
+  "gnetId": null,
+  "graphTooltip": 0,
+  "id": null,
+  "iteration": 169,
+  "links": [],
+  "panels": [
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "id": 1,
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom" },
+        "tooltip": { "mode": "single" }
+      },
+      "targets": [
+        {
+          "expr": "rate(grpc_client_failed_requests{job=\"grpc_client\"}[1m])\n\n",
+          "interval": "",
+          "refId": "A"
+        }
+      ],
+      "title": "gRPC Server: Request & Error Rate",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "id": 2,
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom" },
+        "tooltip": { "mode": "single" }
+      },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum by(le) (rate(grpc_server_handling_seconds_bucket{grpc_service=\"Monitoring.MonitoringService\"}[5m])))\n\n",
+          "legendFormat": "P95 Latency",
+          "refId": "A"
+        },
+        {
+          "expr": "histogram_quantile(0.5, sum by(le) (rate(grpc_server_handling_seconds_bucket{grpc_service=\"Monitoring.MonitoringService\"}[5m])))\n\n",
+          "legendFormat": "Median Latency",
+          "refId": "B"
+        }
+      ],
+      "title": "gRPC Server: Latency (s)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+      "id": 3,
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom" },
+        "tooltip": { "mode": "single" }
+      },
+      "targets": [
+        {
+          "expr": "rate(grpc_client_total_requests[1m])",
+          "interval": "",
+          "legendFormat": "Total /s",
+          "refId": "A"
+        },
+        {
+          "expr": "rate(grpc_client_success_requests[1m])",
+          "interval": "",
+          "legendFormat": "Success /s",
+          "refId": "B"
+        },
+        {
+          "expr": "rate(grpc_client_failed_requests[1m])",
+          "interval": "",
+          "legendFormat": "Failures /s",
+          "refId": "C"
+        }
+      ],
+      "title": "gRPC Client: Request Rates",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+      "id": 4,
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom" },
+        "tooltip": { "mode": "single" }
+      },
+      "targets": [
+        {
+          "expr": "rate(container_cpu_usage_seconds_total{container_label_com_docker_compose_service=\"server\"}[1m]) * 100",
+          "interval": "",
+          "legendFormat": "Server CPU (%)",
+          "refId": "A"
+        },
+        {
+          "expr": "rate(container_cpu_usage_seconds_total{container_label_com_docker_compose_service=\"client\"}[1m]) * 100",
+          "interval": "",
+          "legendFormat": "Client CPU (%)",
+          "refId": "B"
+        },
+        {
+          "expr": "rate(container_cpu_usage_seconds_total{container_label_com_docker_compose_service=\"cadvisor\"}[1m]) * 100",
+          "interval": "",
+          "legendFormat": "CAdvisor CPU (%)",
+          "refId": "C"
+        }
+      ],
+      "title": "Container CPU Usage (%)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 16 },
+      "id": 5,
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom" },
+        "tooltip": { "mode": "single" }
+      },
+      "targets": [
+        {
+          "expr": "container_memory_usage_bytes{container_label_com_docker_compose_service=\"client\"}",
+          "interval": "",
+          "legendFormat": "Client Memory",
+          "refId": "A"
+        },
+        {
+          "expr": "container_memory_usage_bytes{container_label_com_docker_compose_service=\"server\"}",
+          "interval": "",
+          "legendFormat": "Server Memory",
+          "refId": "B"
+        },
+        {
+          "expr": "container_memory_usage_bytes{container_label_com_docker_compose_service=\"cadvisor\"}",
+          "interval": "",
+          "legendFormat": "CAdvisor Memory",
+          "refId": "C"
+        }
+
+      ],
+      "title": "Container Memory Usage (bytes)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 16 },
+      "id": 6,
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom" },
+        "tooltip": { "mode": "single" }
+      },
+      "targets": [
+        {
+          "expr": "container_fs_usage_bytes{container_label_com_docker_compose_service=\"server\"}",
+          "interval": "",
+          "legendFormat": "Server Disk Usage",
+          "refId": "A"
+        },
+        {
+          "expr": "container_fs_usage_bytes{container_label_com_docker_compose_service=\"client\"}",
+          "interval": "",
+          "legendFormat": "Client Disk Usage",
+          "refId": "B"
+        },
+        {
+          "expr": "container_fs_usage_bytes{container_label_com_docker_compose_service=\"cadvisor\"}",
+          "interval": "",
+          "legendFormat": "CAdvisor Disk Usage",
+          "refId": "C"
+        }
+      ],
+      "title": "Container Filesystem Usage",
+      "type": "timeseries"
+    }
+  ],
+  "refresh": "30s",
+  "schemaVersion": 37,
+  "style": "dark",
+  "tags": ["grpc", "cAdvisor", "docker"],
+  "templating": { "list": [] },
+  "time": { "from": "now-1h", "to": "now" },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "gRPC & Container Monitoring",
+  "uid": null,
+  "version": 1
+}

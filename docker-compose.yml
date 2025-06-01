@@ -1,0 +1,83 @@
+version: "3.8"
+
+services:
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    image: grpc_monitoring_server:latest
+    container_name: grpc_server
+    ports:
+      - "50059:50059"
+      - "2001:2001"
+    environment:
+      - GRPC_PORT=50059
+      - METRICS_PORT=2001
+      - TLS_CERT_FILE=/etc/certs/server.crt.pem
+      - TLS_KEY_FILE=/etc/certs/server.key.pem
+      - TLS_CA_FILE=/etc/certs/ca.crt.pem
+    volumes:
+      - ./certs:/etc/certs:ro
+
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    image: grpc_monitoring_client:latest
+    container_name: grpc_client
+    depends_on:
+      - server
+    ports:
+      - "2016:2016"
+    environment:
+      GRPC_SERVER_ADDRESS: "server:50059"
+      METRICS_PORT: "2016"
+      TLS_CERT_FILE: "/etc/certs/client.crt.pem"
+      TLS_KEY_FILE: "/etc/certs/client.key.pem"
+      TLS_CA_FILE: "/etc/certs/ca.crt.pem"
+    volumes:
+      - ./certs:/etc/certs:ro
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: monitoring_prometheus
+    ports:
+      - "9099:9090"   # Expose Prometheus web UI on host:9091
+    volumes:
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+    depends_on:
+      - server
+      - client
+      - cadvisor
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: monitoring_grafana
+    ports:
+      - "3005:3000"   # Grafana UI
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+    depends_on:
+      - prometheus
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.52.1
+    container_name: cadvisor
+    ports:
+      - "8086:8080"                     # Expose cAdvisor UI and /metrics
+    volumes:
+      - /:/rootfs:ro                    # host filesystem
+      - /var/run:/var/run:rw            # cgroups, etc.
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro  # Docker metadata
+      - /var/run/docker.sock:/var/run/docker.sock:ro  # <-- allows Docker labels
+
+volumes:
+  grafana_data:

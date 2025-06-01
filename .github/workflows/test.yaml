@@ -1,0 +1,41 @@
+name: Run Unit Tests
+
+on:
+  push:
+    branches: ['**']
+
+jobs:
+  gotest:
+    if: "!contains(github.event.head_commit.message, '[skip ci]')"
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.24'
+
+      - name: Cache Go modules
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
+      - name: Run Go tests on grpc client
+        working-directory: client
+        run: |
+          go test ./internal/security -v
+          go test ./internal/service -v
+
+      - name: Run Go tests on grpc server
+        working-directory: server
+        run: |
+          go test ./internal/security -v
+          go test ./internal/service -v
